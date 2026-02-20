@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #225373;
+  --color-dusty-rose: #b5827e;
+  --color-card-bg: #b5827e;
+  --color-fendi: #fdfbf7;
+  --color-background-light: #fdfbf7;
+  --color-text-main: #5f5f5f;
+
+  --font-display: "Plus Jakarta Sans", sans-serif;
+  --font-handwritten: "Dancing Script", cursive;
+  --font-sketch: "Caveat", cursive;
+
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+}
+
+@utility dot-grid {
+  background-image: radial-gradient(#d1cfc7 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+@utility washi-tape {
+  background: rgba(181, 130, 126, 0.3);
+  backdrop-filter: blur(1px);
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+@utility polaroid-frame {
+  background: white;
+  padding: 10px 10px 40px 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+@utility polaroid-rose {
+  background: var(--color-card-bg);
+  padding: 12px 12px 48px 12px;
+  box-shadow: 5px 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+@utility paper-shadow {
+  box-shadow: 3px 3px 12px rgba(0, 0, 0, 0.12);
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Countdown and Journey Styles */
+.countdown-container {
+  background: white;
+  border: 1px solid rgba(181, 130, 126, 0.1);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+}
+
+.journey-step {
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.journey-step::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -20px;
+  width: 1px;
+  height: 20px;
+  background: rgba(95, 95, 95, 0.1);
+  transform: translateX(-50%);
+}
+
+.journey-step:last-child::before {
+  display: none;
+}
+
+.journey-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d1d1;
+  transition: all 0.3s ease;
+}
+
+.journey-step.active .journey-dot {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(34, 83, 115, 0.1);
+}
+
+.journey-step.active .journey-label {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* Flip Card Styles */
+.flip-card {
+  perspective: 1000px;
+  background-color: transparent;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flip-card:active .flip-card-inner,
+.flip-card:hover .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 4px;
+}
+
+.flip-card-back {
+  background-color: var(--color-primary);
+  color: white;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+body {
+  font-family: var(--font-display);
+  color: var(--color-text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-background-light);
+}
+
+.fill-1 {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* Custom staggered layout utilities */
+.stagger-1 {
+  transform: rotate(-3deg);
+}
+
+.stagger-2 {
+  transform: rotate(2deg);
+}
+
+.stagger-3 {
+  transform: rotate(-4deg);
+}
+
+.stagger-4 {
+  transform: rotate(1deg);
+}
