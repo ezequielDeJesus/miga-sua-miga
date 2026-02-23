@@ -49,7 +49,7 @@
                 </h3>
                 <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                     <button
-                        class="style-chip active flex-shrink-0 px-6 py-3 bg-primary text-white text-[10px] font-black uppercase rounded-lg shadow-lg border-2 border-primary"
+                        class="style-chip flex-shrink-0 px-6 py-3 bg-primary text-white text-[10px] font-black uppercase rounded-lg shadow-lg border-2 border-primary scale-105 transition-all"
                         data-style="clássico">Clássico</button>
                     <button
                         class="style-chip flex-shrink-0 px-6 py-3 bg-white text-text-main border-2 border-black/5 text-[10px] font-black uppercase rounded-lg hover:border-primary/20 transition-all"
@@ -146,14 +146,6 @@
     </div>
 
     <style>
-        .style-chip.active {
-            background-color: var(--color-primary);
-            color: white;
-            border-color: var(--color-primary);
-            box-shadow: 0 10px 20px -5px rgba(34, 83, 115, 0.4);
-            transform: scale(1.05);
-        }
-
         .element-toggle.active {
             border-color: var(--color-primary);
             background-color: rgba(34, 83, 115, 0.05);
@@ -168,6 +160,7 @@
     <script type="module">
         import { renderHeader } from '/src/components/AppHeader.js';
         import { renderBottomNav } from '/src/components/BottomNav.js';
+        import { NanoBananaAI } from '/src/utils/nanoBanana.js';
 
         document.getElementById('header-placeholder').innerHTML = renderHeader('Decorador');
         document.getElementById('nav-placeholder').innerHTML = renderBottomNav();
@@ -200,8 +193,12 @@
 
         styleChips.forEach(chip => {
             chip.onclick = () => {
-                styleChips.forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
+                styleChips.forEach(c => {
+                    c.classList.remove('bg-primary', 'text-white', 'shadow-lg', 'border-primary', 'scale-105');
+                    c.classList.add('bg-white', 'text-text-main', 'border-black/5');
+                });
+                chip.classList.remove('bg-white', 'text-text-main', 'border-black/5');
+                chip.classList.add('bg-primary', 'text-white', 'shadow-lg', 'border-primary', 'scale-105');
                 state.style = chip.dataset.style;
             };
         });
@@ -219,25 +216,45 @@
             if (state.room) btnGenerate.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
         };
 
-        btnGenerate.onclick = () => {
+        btnGenerate.onclick = async () => {
             aiOverlay.classList.remove('hidden');
+
+            // Artificial delay to feel like "AI Processing"
+            const messages = [
+                "Lendo volumetria do espaço...",
+                "Projetando sombras de móveis...",
+                "Ajustando paleta cromática...",
+                "Finalizando renderização HD..."
+            ];
+
+            let i = 0;
+            const msgEl = aiOverlay.querySelector('p');
+            const interval = setInterval(() => {
+                msgEl.innerText = messages[i % messages.length];
+                i++;
+            }, 800);
+
+            // Generate the decorated image using Nano Banana AI
+            const resultImg = await NanoBananaAI.simulateDecoration(state.room, state.style, state.elements);
+
             setTimeout(() => {
+                clearInterval(interval);
                 aiOverlay.classList.add('hidden');
-                saveDecor(state.room, state.style, state.elements);
+                saveDecor(resultImg, state.style, state.elements);
                 // Reset
                 state.room = null;
                 roomPreview.classList.add('hidden');
                 btnGenerate.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
                 document.getElementById('custom-prompt').value = '';
                 elementToggles.forEach(t => t.classList.remove('active'));
-            }, 4000);
+            }, 3200);
         };
 
-        const saveDecor = (room, style, elements) => {
+        const saveDecor = (resultImg, style, elements) => {
             const history = JSON.parse(localStorage.getItem('miga_decor') || '[]');
             const newEntry = {
                 id: Date.now(),
-                img: room, // Simulation
+                img: resultImg,
                 description: `Ambiente ${style} com ${elements.join(', ') || 'detalhes curados'}.`,
                 date: new Date().toLocaleDateString('pt-BR')
             };

@@ -98,6 +98,7 @@
     <script type="module">
         import { renderHeader } from '/src/components/AppHeader.js';
         import { renderBottomNav } from '/src/components/BottomNav.js';
+        import { NanoBananaAI } from '/src/utils/nanoBanana.js';
 
         document.getElementById('header-placeholder').innerHTML = renderHeader('Provador Mágico');
         document.getElementById('nav-placeholder').innerHTML = renderBottomNav();
@@ -142,62 +143,6 @@
             }
         };
 
-        const generateRealisticComposite = async (brideSrc, dressSrc) => {
-            return new Promise((resolve, reject) => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const brideImg = new Image();
-                const dressImg = new Image();
-
-                brideImg.onerror = () => resolve(brideSrc); // Fallback
-                dressImg.onerror = () => resolve(brideSrc);
-
-                brideImg.onload = () => {
-                    canvas.width = brideImg.width;
-                    canvas.height = brideImg.height;
-
-                    // 1. Draw Bride (Base)
-                    ctx.drawImage(brideImg, 0, 0);
-
-                    dressImg.onload = () => {
-                        // 2. Realistic Composite Logic
-                        // Scale dress to ~68% of bride height
-                        const dScale = (canvas.height * 0.68) / dressImg.height;
-                        const dWidth = dressImg.width * dScale;
-                        const dHeight = dressImg.height * dScale;
-
-                        // Center horizontally, position slightly above the middle vertically
-                        const dx = (canvas.width - dWidth) / 2;
-                        const dy = canvas.height * 0.20;
-
-                        // AI "Magic Glow" around the dress
-                        ctx.save();
-                        ctx.shadowBlur = 60;
-                        ctx.shadowColor = "rgba(181, 101, 118, 0.4)"; // Dusty Rose AI Glow
-
-                        // Draw dress with a subtle overlay blend to integrate with bride's lighting
-                        ctx.globalAlpha = 0.95;
-                        ctx.drawImage(dressImg, dx, dy, dWidth, dHeight);
-                        ctx.restore();
-
-                        // 3. Editorial "Finish"
-                        ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-                        ctx.fillRect(0, 0, canvas.width, canvas.height); // Slight bright tint
-
-                        // 4. Nano Banana Branding
-                        ctx.font = "bold 32px 'Plus Jakarta Sans'";
-                        ctx.shadowColor = "black";
-                        ctx.shadowBlur = 10;
-                        ctx.fillStyle = "white";
-                        ctx.fillText("Nano Banana AI • Realistic Try-on", 50, canvas.height - 50);
-
-                        resolve(canvas.toDataURL('image/jpeg', 0.85));
-                    };
-                    dressImg.src = dressSrc;
-                };
-                brideImg.src = brideSrc;
-            });
-        };
 
         btnMatch.onclick = async () => {
             aiOverlay.classList.remove('hidden');
@@ -217,8 +162,8 @@
                 msgIdx++;
             }, 700);
 
-            // Generate the composite image
-            const resultImg = await generateRealisticComposite(uploads.bride, uploads.dress);
+            // Generate the composite image using Nano Banana AI
+            const resultImg = await NanoBananaAI.simulateTryOn(uploads.bride, uploads.dress);
 
             setTimeout(() => {
                 clearInterval(interval);
@@ -233,15 +178,50 @@
         };
 
         const saveResult = (compositeImg) => {
-            const results = JSON.parse(localStorage.getItem('miga_provador') || '[]');
-            const newResult = {
-                id: Date.now(),
-                img: compositeImg,
-                date: new Date().toLocaleDateString('pt-BR')
-            };
-            results.unshift(newResult);
-            localStorage.setItem('miga_provador', JSON.stringify(results));
-            renderResults();
+            try {
+                let results = JSON.parse(localStorage.getItem('miga_provador') || '[]');
+                const newResult = {
+                    id: Date.now(),
+                    img: compositeImg,
+                    date: new Date().toLocaleDateString('pt-BR')
+                };
+
+                // Add to start
+                results.unshift(newResult);
+
+                // Keep trying to save, if quota exceeded, remove oldest
+                let saved = false;
+                while (!saved && results.length > 0) {
+                    try {
+                        localStorage.setItem('miga_provador', JSON.stringify(results));
+                        saved = true;
+                    } catch (e) {
+                        if (e.name === 'QuotaExceededError') {
+                            console.warn('LocalStorage cheio! Removendo o item mais antigo...');
+                            results.pop(); // Remove the oldest item and try again
+                        } else {
+                            throw e;
+                        }
+                    }
+                }
+
+                if (saved) {
+                    renderResults();
+                } else {
+                    console.error('Imagem muito grande para ser salva no LocalStorage sozinha.');
+                    // Still render the current result even if it couldn't be saved to history
+                    provadorList.innerHTML = `
+                        <div class="polaroid-rose relative animate-in fade-in slide-in-from-bottom-4 duration-700">
+                           <div class="aspect-[3/4] bg-white rounded-sm overflow-hidden mb-4 relative shadow-inner">
+                              <img src="${compositeImg}" class="w-full h-full object-cover">
+                           </div>
+                           <div class="font-handwriting text-2xl text-rose-900/80 mb-1">Não foi possível salvar (Memória cheia)</div>
+                        </div>
+                    ` + provadorList.innerHTML;
+                }
+            } catch (error) {
+                console.error('Erro ao salvar no histórico:', error);
+            }
         };
 
         const renderResults = () => {
